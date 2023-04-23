@@ -1,0 +1,2 @@
+export RUNNING_IN_ENV=local
+export GO111MODULE=on
