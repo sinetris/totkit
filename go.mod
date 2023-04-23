@@ -1,4 +1,4 @@
-module sinetris.info/dotool
+module sinetris.info/totkit
 
 go 1.20
 
