@@ -1,0 +1,10 @@
+default: true
+
+# Exclusions for deliberate/widespread violations
+MD010:  # Hard tabs
+  ignore_code_languages:
+  - ini
+MD013:
+  line_length: 88
+MD046:  # Code block style
+    style: fenced
