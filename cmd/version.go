@@ -12,13 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-	"sinetris.info/totkit/cmd"
-	_ "sinetris.info/totkit/cmd/vm"
+	"fmt"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd.Execute()
+const Version = "0.0.1"
+
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Prints version of the app",
+	Long:  "Prints version of the app",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(Version)
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(versionCmd)
 }

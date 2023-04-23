@@ -16,7 +16,7 @@ local_dependencies := pre-commit direnv
 ci_dependencies :=
 
 define project_help_header
-Development tasks for the DevOps Toolkit project
+Development tasks for the TechOps Toolkit project
   Used environment variables: ${blue_text}${bold_text}RUNNING_IN_ENV, USE_COLORS${reset_text}
     ${bold_text}RUNNING_IN_ENV${reset_text}: specify where make is running
       valid values: one of '${bold_text}${running_enabled_list}${reset_text}'
