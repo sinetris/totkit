@@ -33,6 +33,7 @@ var RootCmd = &cobra.Command{
 		TechOps Tool Kit
 		A CLI to simplify TechOps tasks.
 	`),
+	Version: "0.0.1",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
