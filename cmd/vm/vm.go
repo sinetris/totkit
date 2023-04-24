@@ -17,6 +17,7 @@ package vm
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 	"sinetris.info/totkit/cmd"
 )
@@ -24,13 +25,12 @@ import (
 // vmCmd represents the vm command
 var vmCmd = &cobra.Command{
 	Use:   "vm",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Manage Virtual Machines",
+	Long: heredoc.Doc(`
+		Manage Virtual Machine
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		For now, only Virtualbox Machines can be managed.
+	`),
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("vm called")
 	},
