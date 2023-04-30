@@ -53,9 +53,9 @@ cp .envrc.example .envrc
 direnv allow
 ```
 
-## Run locally
+### make targets
 
-To get a complete list of commands, run
+To get a complete list of targets, run
 
 ```sh
 make help
