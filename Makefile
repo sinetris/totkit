@@ -17,13 +17,13 @@ ci_dependencies :=
 
 define project_help_header
 Development tasks for the TechOps Toolkit project
-  Used environment variables: ${blue_text}${bold_text}RUNNING_IN_ENV, USE_COLORS${reset_text}
+  Used environment variables: ${blue_text}${bold_text}RUNNING_IN_ENV, NO_COLOR${reset_text}
     ${bold_text}RUNNING_IN_ENV${reset_text}: specify where make is running
       valid values: one of '${bold_text}${running_enabled_list}${reset_text}'
       current value: ${bold_text}${RUNNING_IN_ENV}${reset_text}
-    ${bold_text}USE_COLORS${reset_text}: use colors in output
-      valid values: one of '${bold_text}true false${reset_text}'
-      current value: ${bold_text}${USE_COLORS}${reset_text}
+    ${bold_text}NO_COLOR${reset_text}: disable colors in output
+      valid values: evaluated as '${bold_text}true${reset_text}' when '${bold_text}NO_COLOR${reset_text}' environment variable is set
+      current value: ${bold_text}${no_color_description}${reset_text}
 endef
 export project_help_header
 
@@ -38,7 +38,7 @@ _pre-check-if-allowed:
 
 _pre-check-dependencies-local: export dependencies += $(local_dependencies)
 _pre-check-dependencies-%:
-	@$(info ${blue_text}- Checking dependencies '${bold_text}$(dependencies)${reset_text}${blue_text}' ...${reset_text})
+	@$(info ${blue_text}- Checking project dependencies '${bold_text}$(dependencies)${reset_text}${blue_text}' ...${reset_text})
 	@for dependency in $(dependencies); do \
 		if ! [ -x "$$(command -v "$${dependency}")" ]; then \
 			echo "${bold_text}Dependency not found: '${red_text}$${dependency}${reset_text}'" \
@@ -60,6 +60,9 @@ tests: check install_project_deps lint-check vet  ## Test code quality
 	@$(info ${blue_text}- Starting tests ...${reset_text})
 	@richgo test ./...
 .PHONY: tests
+test: tests  ## Alias for 'tests'
+	@:
+.PHONY: test
 
 vet:  ## Run go vet against code.
 	@$(info ${blue_text}- Running vetting tools ...${reset_text})
@@ -81,8 +84,16 @@ tidy:  ## Run go mod tidy on every mod file in the repo
 	@go mod tidy
 .PHONY: tidy
 
-build: check install_project_deps ## Build the project executable
-	@$(info ${blue_text}- Build ...${reset_text})
+build: check install_project_deps _build-target-$(RUNNING_IN_ENV)  ## Build the project executable
+	@:
+.PHONY: build
+
+_build-target-local:
+	@$(info ${blue_text}- Build local ...${reset_text})
+	@go build -o $(BUILDDIR)/totkit -v
+.PHONY: _build-target-local
+_build-target-ci:
+	@$(info ${blue_text}- Build cross-platform ...${reset_text})
 	@gox \
 		-os=$(XC_OS) \
 		-arch=$(XC_ARCH) \
@@ -90,10 +101,18 @@ build: check install_project_deps ## Build the project executable
 		-parallel=$(XC_PARALLEL) \
 		-output=$(BUILDDIR)/{{.Dir}}_{{.OS}}_{{.Arch}} \
 		;
-.PHONY: build
+.PHONY: _build-target-ci
+
+install:  ## Install totkit (TechOps Toolkit)
+	@$(info ${blue_text}- Installing totkit ...${reset_text})
+	@go install
+	@$(info ${yellow_text}  open a new shell and run${reset_text})
+	@$(info ${bold_text}${yellow_text}  totkit completion --help${reset_text})
+	@$(info ${yellow_text}  for autocompletion instructions${reset_text})
+.PHONY: install
 
 install_project_deps:
-	@$(info ${blue_text}- Downloading dependencies ...${reset_text})
+	@$(info ${blue_text}- Downloading code dependencies ...${reset_text})
 	@go get -v ./...
 .PHONY: install_project_deps
 

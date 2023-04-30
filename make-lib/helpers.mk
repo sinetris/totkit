@@ -1,8 +1,8 @@
 # Helper functions
 
 # named colors for text
-USE_COLORS?=true
-ifeq ($(USE_COLORS), true)
+ifeq ($(origin NO_COLOR),undefined)
+  no_color_description := false (will try to print colors)
   red_text := $(shell tput setaf 1)
   green_text := $(shell tput setaf 2)
   yellow_text := $(shell tput setaf 3)
@@ -13,6 +13,7 @@ ifeq ($(USE_COLORS), true)
   bold_text := $(shell tput bold)
   reset_text := $(shell tput sgr 0)
 else
+  no_color_description := true (colors are disabled)
   red_text :=
   green_text :=
   yellow_text :=
