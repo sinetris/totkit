@@ -31,7 +31,7 @@ var RootCmd = &cobra.Command{
 	Use:   "totkit",
 	Short: "TechOps ToolKit",
 	Long: heredoc.Doc(`
-		TechOps Tool Kit
+		TechOps ToolKit
 		A CLI to simplify TechOps tasks.
 	`),
 	Version: "0.0.1",

@@ -54,6 +54,7 @@ repos:
     rev: v0.33.0
     hooks:
       - id: markdownlint
+        exclude: ^docs/generated/
   # Makefile Linter
   - repo: https://github.com/mrtazz/checkmake.git
     rev: 0.2.2

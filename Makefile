@@ -8,6 +8,7 @@ endif
 -include ${this_makefile_path}/make-lib/helpers.mk
 
 BUILDDIR?="${this_makefile_path}/build"
+PROJECT_GENERATED_DOCS_DIR?="${this_makefile_path}/docs/generated"
 SRC=$(shell find . -name "*.go")
 
 running_enabled_list := ci local
@@ -116,9 +117,16 @@ install_project_deps:
 	@go get -v ./...
 .PHONY: install_project_deps
 
+generate-docs:  ## Generate totkit documentation
+	@$(info ${blue_text}- Generate totkit documentation ...${reset_text})
+	@mkdir -p ${PROJECT_GENERATED_DOCS_DIR}
+	@go run main.go generate-docs
+.PHONY: generate-docs
+
 clean:  ## Remove generated artifacts
 	@$(info ${blue_text}- Clean generated artifacts ...${reset_text})
 	@rm -rf $(BUILDDIR)
+	@rm -rf $(PROJECT_GENERATED_DOCS_DIR)
 .PHONY: clean
 
 .DEFAULT_GOAL := help
