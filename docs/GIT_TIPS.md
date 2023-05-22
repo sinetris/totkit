@@ -2,6 +2,8 @@
 
 ## Work with pre-commit
 
+### What to do for 'Rolling back fixes'
+
 In case you get:
 
 > [WARNING] Stashed changes conflicted with hook auto-fixes... Rolling back fixes...
@@ -44,7 +46,7 @@ no changes added to commit (use "git add" and/or "git commit -a")
 ~$ git add my_file.ext new_file1.ext
 ~$ # Stash all other files
 ~$ git stash --keep-index --include-untracked --message <message>
-Saved working directory and index state WIP on <<your-branch>>: <<hash>> <<message>>
+Saved working directory and index state WIP on <<your-branch>>: <<message>>
 ~$ # Check we still have the staged files we want to commit
 ~$ git status
 On branch virtualbox-plugin
@@ -73,4 +75,46 @@ Untracked files:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 Dropped refs/stash@{0} (<<hash>>)
+```
+
+### How to edit commits (for example, split a commit)
+
+Rebase to a commit that contain the commits you want to edit.
+For example:
+
+- if it's 3 commits back, use `HEAD~3`
+- if you are on a new branch and want to rebase to 'main' use `main`
+
+    > Example
+
+    ```sh
+    git rebase -i main
+    ```
+
+Mark as **edit** the commits you want to change (replace '**pick**' with '**edit**'
+for the commits), and then modify each commit.
+
+```sh
+# For each commit marked as 'edit'
+# (reset) to unstage chenges so we can work on them
+git reset HEAD~
+# (change) files and then commit
+# - make the changes you want
+# - add the needed files
+# - stash the other files
+# - commit the changes
+# - bring back stashed files
+git add one-file-I-changed.txt another-file-I-want-in-this-commit.txt
+# stash files you want to keep for later (or skip if you added all the files)
+git stash --keep-index --include-untracked
+# commit the changes
+git commit -m "a useful message"
+# bring back stashed files (skip also this if you skipped the previous
+# 'stash' command)
+git stash pop
+# Repeat from (change) until your working tree is clean and
+# all changes are done for the commit.
+# Tell git to continue to the next rebase step
+git rebase --continue
+# Repeat from (reset) for each commit you want to change.
 ```
