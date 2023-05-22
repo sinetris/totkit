@@ -17,7 +17,7 @@ package main
 import (
 	"sinetris.info/totkit/cmd"
 	_ "sinetris.info/totkit/cmd/generate"
-	_ "sinetris.info/totkit/cmd/vm"
+	_ "sinetris.info/totkit/cmd/virtualization"
 )
 
 func main() {
