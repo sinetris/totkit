@@ -12,14 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package generate
 
 import (
+	"github.com/MakeNowJust/heredoc"
+	"github.com/spf13/cobra"
 	"sinetris.info/totkit/cmd"
-	_ "sinetris.info/totkit/cmd/generate"
-	_ "sinetris.info/totkit/cmd/vm"
 )
 
-func main() {
-	cmd.Execute()
+// generateCmd represents the vm command
+var generateCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "CLI command to Generate code",
+	Long: heredoc.Doc(`
+		CLI code generator
+
+		Look at the sub commands to generate configs, docs, etc
+	`),
+}
+
+func init() {
+	cmd.RootCmd.AddCommand(generateCmd)
 }

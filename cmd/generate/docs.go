@@ -12,27 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package generate
 
 import (
 	"log"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	rootCmd "sinetris.info/totkit/cmd"
 )
 
-// vmCmd represents the vm command
-var vmCmd = &cobra.Command{
-	Use:   "generate-docs",
-	Short: "Generate CLI Documentation",
-	Long: heredoc.Doc(`
-		Generate CLI Documentation
-
-		For now, only Virtualbox Machines can be managed.
-	`),
+// docsCmd represents the vm command
+var docsCmd = &cobra.Command{
+	Use:   "docs",
+	Short: "Generate documentation for totkit CLI",
+	Long:  "Generate documentation for totkit CLI",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doc.GenMarkdownTree(RootCmd, "./docs/generated")
+		err := doc.GenMarkdownTree(rootCmd.RootCmd, "./docs/generated")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -40,15 +36,5 @@ var vmCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(vmCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// vmCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// vmCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	generateCmd.AddCommand(docsCmd)
 }

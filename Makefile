@@ -120,7 +120,7 @@ install_project_deps:
 generate-docs:  ## Generate totkit documentation
 	@$(info ${blue_text}- Generate totkit documentation ...${reset_text})
 	@mkdir -p ${PROJECT_GENERATED_DOCS_DIR}
-	@go run main.go generate-docs
+	@go run main.go generate docs
 .PHONY: generate-docs
 
 clean:  ## Remove generated artifacts
