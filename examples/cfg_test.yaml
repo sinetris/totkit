@@ -1,0 +1,8 @@
+---
+vm:
+  one:
+    cpu: 2
+    memory: 1G
+  two:
+    cpu: 2
+    memory: 3G
