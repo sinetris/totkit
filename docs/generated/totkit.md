@@ -12,9 +12,9 @@ A CLI to simplify TechOps tasks.
 
 ```
       --config string   config file (default "$HOME/.totkit.yaml")
+      --debug           Print Debug info
   -h, --help            help for totkit
       --no-color        disable colors in command output [$NO_COLOR=1]
-  -t, --toggle          Help message for toggle
 ```
 
 ### SEE ALSO

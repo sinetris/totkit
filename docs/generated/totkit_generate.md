@@ -19,6 +19,7 @@ Look at the sub commands to generate configs, docs, etc
 
 ```
       --config string   config file (default "$HOME/.totkit.yaml")
+      --debug           Print Debug info
       --no-color        disable colors in command output [$NO_COLOR=1]
 ```
 

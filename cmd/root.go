@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
@@ -25,6 +25,7 @@ import (
 )
 
 var cfgFile string
+var debug bool = false
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -49,19 +50,18 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// Persistent flags global for your application.
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "$HOME/.totkit.yaml", "config file")
 	RootCmd.PersistentFlags().BoolVar(&color.NoColor, "no-color", false, "disable colors in command output [$NO_COLOR=1]")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Print Debug info")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	if debug {
+		log.Println("initConfig")
+	}
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -79,7 +79,24 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			if debug {
+				log.Printf("Config file not found:\n%v\n", err)
+			}
+		} else {
+			// Config file was found but another error was produced
+			if debug {
+				log.Printf("Config error:\n%v\n", err)
+			}
+		}
+	} else {
+		if debug {
+			log.Println("Config is OK")
+		}
+	}
+	if debug {
+		log.Printf("Config:\n%v\n", viper.AllSettings())
 	}
 }

@@ -20,6 +20,7 @@ totkit vm status [flags]
 
 ```
       --config string   config file (default "$HOME/.totkit.yaml")
+      --debug           Print Debug info
       --no-color        disable colors in command output [$NO_COLOR=1]
 ```
 
