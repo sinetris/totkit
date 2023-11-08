@@ -14,29 +14,20 @@
 
 package virtualization
 
-import "fmt"
-
-var Provisioners = make(map[string]Provisioner)
-
-type Provisioner interface {
-	Name() string
-	Version() (string, error)
-	VirtualMachine() VirtualMachineProvisioner
-	Network() NetworkProvisioner
+type NetworkProvisioner interface {
+	Create(NetworkConfig) error
+	Destroy(name string) error
+	State(name string) (Network, error)
+	List() (map[string]Network, error)
 }
 
-func RegisterProvisioner(name string, provisioner Provisioner) {
-	if _, found := Provisioners[name]; found {
-		panic(fmt.Errorf("registering duplicate provisioner '%s'", name))
-	}
-	Provisioners[name] = provisioner
+type NetworkConfig struct {
+	Name string
+	CIDR string
 }
 
-func GetProvisioner(name string) (Provisioner, error) {
-	var err error
-	provisioner, found := Provisioners[name]
-	if !found {
-		err = fmt.Errorf("provisioner '%s' doesn't exist", name)
-	}
-	return provisioner, err
+type Network struct {
+	Name string
+	CIDR string
+	Type string
 }
