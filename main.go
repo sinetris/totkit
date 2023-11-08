@@ -18,6 +18,7 @@ import (
 	"sinetris.info/totkit/cmd"
 	_ "sinetris.info/totkit/cmd/generate"
 	_ "sinetris.info/totkit/cmd/virtualization"
+	_ "sinetris.info/totkit/pkg/vbox"
 )
 
 func main() {
