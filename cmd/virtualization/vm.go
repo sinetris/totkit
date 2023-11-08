@@ -16,12 +16,9 @@ package virtualization
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"sinetris.info/totkit/pkg/vbox"
+	"sinetris.info/totkit/pkg/virtualization"
 )
 
 // vmCmd represents the 'vm' command
@@ -44,18 +41,7 @@ var destroyVMCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "Destroy a Virtual Machines",
 	Long:  "Destroy a Virtual Machines",
-	Run: func(cmd *cobra.Command, args []string) {
-		// VBoxManage unregistervm ${vbox_machine_id} --delete --machinereadable
-		// VBoxManage destroyvm --name ${vbox_machine_id} --ostype Ubuntu22_LTS_64 --register
-		// VBoxManage natnetwork remove --netname ${net_name}
-
-		fmt.Println("VMs: " + strings.Join(args, " "))
-		version, err := vbox.VBoxManage("--version")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("VirtualBox version %s\n", version)
-	},
+	RunE:  runEDestroyVM,
 }
 
 // statusVMCmd represents the 'vm status' command
@@ -63,18 +49,7 @@ var statusVMCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check Virtual Machines status",
 	Long:  "Check Virtual Machines status",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("VMs: " + strings.Join(args, " "))
-		// VBoxManage list vms
-		// VBoxManage list systemproperties
-		// VBoxManage list bridgedifs
-		// VBoxManage list hdds
-		version, err := vbox.VBoxManage("--version")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("VirtualBox version %s\n", version)
-	},
+	RunE:  runEStateVM,
 }
 
 func init() {
@@ -83,34 +58,48 @@ func init() {
 }
 
 func runECreateVM(cmd *cobra.Command, args []string) error {
-	settings := viper.AllSettings()
-	log.Println(settings)
-	viper.GetString("logfile")
-	name := "netname"
-	cidr := "192.168.123.0/24"
-	natnet := fmt.Sprintf("natnetwork add --netname %s --network %s --ipv6 off --dhcp on --enable", name, cidr)
-	networkResult, err := vbox.VBoxManage(natnet)
+	provisioner, err := virtualization.GetProvisioner("vbox")
 	if err != nil {
-		log.Fatal(err)
-		return err
+		fmt.Printf("Error: %s\n", err)
 	}
-	fmt.Printf("VirtualBox version %s\n", networkResult)
-
-	// VBoxManage createvm --name ${vbox_machine_id} --ostype Ubuntu22_LTS_64 --register
-	// VBoxManage createvm <--name=name> [--basefolder=basefolder] [--group=group-ID,...] [--ostype=ostype] \
-	//   [--register] [--uuid=uuid] [--cipher cipher] [--password-id password-id] [--password file]
-	// VBoxManage modifyvm ${vbox_machine_id} --audio none
-	// VBoxManage modifyvm ${vbox_machine_id} --hpet on
-	// VBoxManage modifyvm ${vbox_machine_id} --nested-hw-virt on
-	// VBoxManage modifyvm ${vbox_machine_id} --hwvirtex on
-	// VBoxManage clonevm ${vbox_machine_id} --register --name <MACHINE_CLONE_TMP_ID --snapshot base --options link
-
-	fmt.Println("VMs: " + strings.Join(args, " "))
-	version, err := vbox.VBoxManage("--version")
+	vmProvisioner := provisioner.VirtualMachine()
+	name := "vm1"
+	err = vmProvisioner.Create(
+		virtualization.VirtualMachineConfig{
+			Name: name,
+		})
 	if err != nil {
-		log.Fatal(err)
-		return err
+		fmt.Printf("Error: %s\n", err)
 	}
-	fmt.Printf("VirtualBox version %s\n", version)
-	return nil
+	return err
+}
+
+func runEDestroyVM(cmd *cobra.Command, args []string) error {
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	vmProvisioner := provisioner.VirtualMachine()
+	name := "vm1"
+	err = vmProvisioner.Destroy(name)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	return err
+}
+
+func runEStateVM(cmd *cobra.Command, args []string) error {
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	vmProvisioner := provisioner.VirtualMachine()
+	name := "vm1"
+	state, err := vmProvisioner.State(name)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	} else {
+		fmt.Printf("Result: %v\n", state)
+	}
+	return err
 }

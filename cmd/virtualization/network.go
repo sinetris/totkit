@@ -16,82 +16,111 @@ package virtualization
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"sinetris.info/totkit/pkg/vbox"
+	"sinetris.info/totkit/pkg/virtualization"
 )
 
 // networkCmd represents the 'network' command
 var networkCmd = &cobra.Command{
 	Use:   "network",
-	Short: "Manage Virtual Machine resources",
-	Long:  "Manage Virtual Machine resources",
+	Short: "Manage Virtualized network resources",
+	Long:  "Manage Virtualized network resources",
 }
 
 // createNetworkCmd represents the 'network create' command
 var createNetworkCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new Virtual Machines network",
-	Long:  "Create a new Virtual Machines network",
+	Short: "Create a new Virtualized network",
+	Long:  "Create a new Virtualized network",
 	RunE:  runECreateNetwork,
 }
 
 // destroyNetworkCmd represents the 'network destroy' command
 var destroyNetworkCmd = &cobra.Command{
 	Use:   "destroy",
-	Short: "Destroy a Virtual Machines",
-	Long:  "Destroy a Virtual Machines",
-	Run: func(cmd *cobra.Command, args []string) {
-		// VBoxManage unregistervm ${vbox_machine_id} --delete --machinereadable
-		// VBoxManage destroyvm --name ${vbox_machine_id} --ostype Ubuntu22_LTS_64 --register
-		// VBoxManage natnetwork remove --netname ${net_name}
-
-		fmt.Println("VMs: " + strings.Join(args, " "))
-		version, err := vbox.VBoxManage("--version")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("VirtualBox version %s\n", version)
-	},
+	Short: "Destroy a Virtualized network",
+	Long:  "Destroy a Virtualized network",
+	RunE:  runEDestroyNetwork,
 }
 
 // statusNetworkCmd represents the 'network status' command
 var statusNetworkCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Check Virtual Machines status",
-	Long:  "Check Virtual Machines status",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("VMs: " + strings.Join(args, " "))
-		// VBoxManage list vms
-		// VBoxManage list systemproperties
-		// VBoxManage list bridgedifs
-		// VBoxManage list hdds
-		version, err := vbox.VBoxManage("--version")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("VirtualBox version %s\n", version)
-	},
+	Short: "Check Virtualized network status",
+	Long:  "Check Virtualized network status",
+	RunE:  runEStatusNetwork,
+}
+
+// listNetworkCmd represents the 'network list' command
+var listNetworkCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List Virtualized network",
+	Long:  "List Virtualized network",
+	RunE:  runEListNetwork,
 }
 
 func init() {
 	virtualizationCmd.AddCommand(networkCmd)
-	networkCmd.AddCommand(createNetworkCmd, destroyNetworkCmd, statusNetworkCmd)
+	networkCmd.AddCommand(createNetworkCmd, destroyNetworkCmd, statusNetworkCmd, listNetworkCmd)
 }
 
 func runECreateNetwork(cmd *cobra.Command, args []string) error {
-	viper.GetString("logfile")
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
 	name := "netname1"
 	cidr := "192.168.123.0/24"
-	vbox_args := []string{"natnetwork", "add", "--netname", name, "--network", cidr, "--ipv6", "off"}
-	networkResult, err := vbox.VBoxManage(vbox_args...)
+	err = provisioner.Network().Create(
+		virtualization.NetworkConfig{
+			Name: name,
+			CIDR: cidr,
+		})
 	if err != nil {
-		fmt.Printf("Virtualization error for %v\n", vbox_args)
-		log.Fatal(err)
+		fmt.Printf("Error: %s\n", err)
 	}
-	fmt.Printf("VirtualBox network %s\n", networkResult)
+	return err
+}
+
+func runEDestroyNetwork(cmd *cobra.Command, args []string) error {
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	name := "netname1"
+	err = provisioner.Network().Destroy(name)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	return err
+}
+
+func runEStatusNetwork(cmd *cobra.Command, args []string) error {
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	name := "netname1"
+	state, err := provisioner.Network().State(name)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	} else {
+		fmt.Printf("Result: %v\n", state)
+	}
+	return err
+}
+
+func runEListNetwork(cmd *cobra.Command, args []string) error {
+	provisioner, err := virtualization.GetProvisioner("vbox")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+	state, err := provisioner.Network().List()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	} else {
+		fmt.Printf("Result: %v\n", state)
+	}
 	return err
 }

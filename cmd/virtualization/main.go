@@ -20,7 +20,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 	"sinetris.info/totkit/cmd"
-	"sinetris.info/totkit/pkg/vbox"
+	"sinetris.info/totkit/pkg/virtualization"
 )
 
 type VMOptions struct {
@@ -46,7 +46,11 @@ var versionCmd = &cobra.Command{
 	Short: "Show Virtual Machines hypervisor version",
 	Long:  "Check Virtual Machines hypervisor version",
 	Run: func(cmd *cobra.Command, args []string) {
-		version, err := vbox.VBoxManage("--version")
+		provisioner, err := virtualization.GetProvisioner("vbox")
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
+		version, err := provisioner.Version()
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
 		}
