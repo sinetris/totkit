@@ -18,71 +18,124 @@ import (
 	"fmt"
 	"log"
 
-	vn "sinetris.info/totkit/pkg/virtualization"
+	vrt "sinetris.info/totkit/pkg/virtualization"
 )
 
-type VBox struct{}
+// Implement vrt.NetworkProvisioner
 
-type VBoxVM struct {
-	vbox *VBox
-	uuid string
-	name string
+type VBoxkNetworkProvisioner struct {
+	provisioner *VBoxProvisioner
+	Name        string
+	CIDR        string
 }
 
-type VBoxNetwork struct {
-	vbox *VBox
-	Name string
-	CIDR string
-}
-
-func (vbox *VBox) GetName() string {
-	return "vbox"
-}
-
-func (vbox *VBox) GetVersion() (string, error) {
-	version, err := VBoxManage("--version")
+func (n *VBoxkNetworkProvisioner) Create(nc vrt.NetworkConfig) error {
+	vboxArgs := []string{"natnetwork", "add", "--netname", nc.Name, "--network", nc.CIDR, "--ipv6", "off"}
+	res, err := VBoxManage(vboxArgs...)
 	if err != nil {
-		log.Fatal(err)
-		return "", err
+		log.Fatalf("VBoxManage: %v\nError: %v\n", res, err)
+	} else {
+		fmt.Printf("VirtualBox: %s\n", res.Stdout)
 	}
-	return version, nil
-}
-
-func (vbox *VBox) VirtualMachine() vn.VirtualMachine {
-	return &VBoxVM{
-		vbox: vbox,
-	}
-}
-
-func (vbox *VBox) Network() vn.Network {
-	return &VBoxNetwork{
-		vbox: vbox,
-	}
-}
-
-func (box *VBoxVM) Create(vm_config vn.VirtualMachineConfig) error {
-	box.uuid = ""
-	box.name = vm_config.Name
-	return nil
-}
-
-func (box *VBoxVM) GetState(name string) error {
-	log.Printf("VM %s : %v", name, box.uuid)
-	return nil
-}
-
-func (net *VBoxNetwork) Create(nw vn.NetworkConfig) error {
-	vbox_args := []string{"natnetwork", "add", "--netname", nw.Name, "--network", nw.CIDR, "--ipv6", "off"}
-	networkResult, err := VBoxManage(vbox_args...)
-	if err != nil {
-		fmt.Printf("Virtualization error for %v\n", vbox_args)
-		log.Fatal(err)
-	}
-	fmt.Printf("VirtualBox network %s\n", networkResult)
 	return err
 }
 
+func (vm *VBoxkNetworkProvisioner) Destroy(name string) error {
+	vboxArgs := []string{"natnetwork", "remove", "--netname", name}
+	res, err := VBoxManage(vboxArgs...)
+	if err != nil {
+		log.Fatalf("VBoxManage: %v\nError: %v\n", res, err)
+	} else {
+		fmt.Printf("VirtualBox: %s\n", res.Stdout)
+	}
+
+	return err
+}
+
+func (n *VBoxkNetworkProvisioner) State(name string) (vrt.Network, error) {
+	res := new(vrt.Network)
+	return *res, nil
+}
+
+func (n *VBoxkNetworkProvisioner) List() (map[string]vrt.Network, error) {
+	vboxArgs := []string{"natnetwork", "list"}
+	res, err := VBoxManage(vboxArgs...)
+	if err != nil {
+		log.Fatalf("VBoxManage: %v\nError: %v\n", res, err)
+	}
+	fmt.Printf("VirtualBox: %s\n", res.Stdout)
+	networks := make(map[string]vrt.Network)
+	return networks, err
+}
+
+// Implement vrt.VirtualMachineProvisioner
+
+type VBoxVMProvisioner struct {
+	provisioner *VBoxProvisioner
+	uuid        string
+	name        string
+}
+
+func (vm *VBoxVMProvisioner) Create(vmConfig vrt.VirtualMachineConfig) error {
+	vm.uuid = ""
+	vm.name = vmConfig.Name
+	return nil
+}
+
+func (vm *VBoxVMProvisioner) Destroy(name string) error {
+	vboxArgs := []string{"destroyvm", "--name", name}
+	res, err := VBoxManage(vboxArgs...)
+	if err != nil {
+		log.Fatalf("VBoxManage: %v\nError: %v\n", res, err)
+	} else {
+		fmt.Printf("VirtualBox: %s\n", res.Stdout)
+	}
+
+	return err
+}
+
+func (vm *VBoxVMProvisioner) State(name string) (vrt.VirtualMachine, error) {
+	log.Printf("VM %s : %v", name, vm.uuid)
+	res := new(vrt.VirtualMachine)
+	return *res, nil
+}
+
+func (vm *VBoxVMProvisioner) List() (map[string]vrt.VirtualMachine, error) {
+	res := make(map[string]vrt.VirtualMachine)
+
+	return res, nil
+}
+
+// Implement vrt.Provisioner
+
+type VBoxProvisioner struct{}
+
+func (p *VBoxProvisioner) Name() string {
+	return "vbox"
+}
+
+func (p *VBoxProvisioner) Version() (string, error) {
+	res, err := VBoxManage("--version")
+	if err != nil {
+		log.Fatalf("VBoxManage: %v\nError: %v\n", res, err)
+		return "", err
+	}
+	return res.Stdout, nil
+}
+
+func (p *VBoxProvisioner) VirtualMachine() vrt.VirtualMachineProvisioner {
+	return &VBoxVMProvisioner{
+		provisioner: p,
+	}
+}
+
+func (p *VBoxProvisioner) Network() vrt.NetworkProvisioner {
+	return &VBoxkNetworkProvisioner{
+		provisioner: p,
+	}
+}
+
 func init() {
-	vbox := new(VBox)
-	vn.RegisterProvisioner(vbox.GetName(), vbox)
+	provisioner := new(VBoxProvisioner)
+	vrt.RegisterProvisioner(provisioner.Name(), provisioner)
 }

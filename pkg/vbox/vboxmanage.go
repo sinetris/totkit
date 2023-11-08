@@ -17,34 +17,40 @@ package vbox
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"os/exec"
-	"strings"
 	"time"
 )
 
 const VBoxCLI string = "VBoxManage"
 
-func VBoxManage(args ...string) (string, error) {
+type VBoxManageRawResult struct {
+	Args     []string
+	Stdout   string
+	Stderr   string
+	ExitCode int
+}
+
+func VBoxManage(args ...string) (VBoxManageRawResult, error) {
+	res := new(VBoxManageRawResult)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, VBoxCLI, args...)
-	// cmd.Env = append(os.Environ(),
-	// 	"MY_VAR=actual_value",
-	// )
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+	res.Stdout = stdout.String()
+	res.Stderr = stderr.String()
+
 	if err != nil {
-		return "", err
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			res.ExitCode = exiterr.ExitCode()
+		} else {
+			res.ExitCode = -1
+		}
+	} else {
+		res.ExitCode = 0
 	}
 
-	stderrString := strings.TrimSpace(stderr.String())
-
-	if _, ok := err.(*exec.ExitError); ok {
-		err = fmt.Errorf("VBoxManage error for command '%s': %s", VBoxCLI, stderrString)
-	}
-
-	return strings.TrimSpace(stdout.String()), err
+	return *res, err
 }
