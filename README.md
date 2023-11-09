@@ -37,20 +37,21 @@ brew install pre-commit direnv make
 > but you can also use `brew`.
 
 ```sh
-# if you want to install GO using brew
+# Use 'direnv' to set/unset environment variables automatically
+cp .envrc.example .envrc
+# ... modify .envrc to your needs and then run
+direnv allow
+# If you want to install GO using brew
 brew install golang
-# install 'richgo'
-brew install kyoh86/tap/richgo
-# install 'gox'
+# To install dependencies, run
+make install-dependencies
+# You can install 'richgo' and 'gox' dependencies, also running
+go install github.com/kyoh86/richgo@latest
 go install github.com/mitchellh/gox@latest
 # check and setup 'pre-commit'
 pre-commit --version
 pre-commit install
 pre-commit run --all-files
-# Use 'direnv' to set/unset environment variables automatically
-cp .envrc.example .envrc
-# ... modify .envrc to your needs and then run
-direnv allow
 ```
 
 ### make targets
