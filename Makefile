@@ -37,6 +37,7 @@ _pre-check-if-allowed:
 	@$(info ${blue_text}- Running in '${bold_text}$(RUNNING_IN_ENV)${reset_text}${blue_text}' environment ...${reset_text})
 .PHONY: _pre-check-if-allowed
 
+_pre-check-dependencies-ci: export dependencies += $(ci_dependencies)
 _pre-check-dependencies-local: export dependencies += $(local_dependencies)
 _pre-check-dependencies-%:
 	@$(info ${blue_text}- Checking project dependencies '${bold_text}$(dependencies)${reset_text}${blue_text}' ...${reset_text})
@@ -47,17 +48,53 @@ _pre-check-dependencies-%:
 				&& exit 1; \
 		fi;
 	done
+.PHONY: _pre-check-dependencies-ci _pre-check-dependencies-local
+
+_pre-commit-autoupdate:
+	@pre-commit autoupdate
+.PHONY: _pre-commit-autoupdate
+_build-target-local:
+	@$(info ${blue_text}- Build local ...${reset_text})
+	@go build -o $(BUILDDIR)/totkit -v
+.PHONY: _build-target-local
+_build-target-ci:
+	@$(info ${blue_text}- Build cross-platform ...${reset_text})
+	@gox \
+		-os=$(XC_OS) \
+		-arch=$(XC_ARCH) \
+		-osarch=$(XC_OSARCH) \
+		-parallel=$(XC_PARALLEL) \
+		-output=$(BUILDDIR)/{{.Dir}}_{{.OS}}_{{.Arch}} \
+		;
+.PHONY: _build-target-ci
+
+_install_code_deps:
+	@$(info ${blue_text}- Downloading code dependencies ...${reset_text})
+	@go get -v ./...
+.PHONY: _install_code_deps
+
+_update_info:
+	@$(info ${blue_text}- Update all dependencies ...${reset_text})
+.PHONY: _update_info
+
+_update_go:
+	@go get -u ./...
+	@go mod tidy
+.PHONY: _update_go
 # << helper targets
 
 check: _pre-check-if-allowed _pre-check-dependencies-$(RUNNING_IN_ENV) ## Check prerequisites
 .PHONY: check
 
-format: check tidy lint-fix  ## Format code (will change files that need formatting)
+format: check  ## Format code (will change files that need formatting)
 	@$(info ${blue_text}- Formatting code ...${reset_text})
 	@go fmt ./...
 .PHONY: format
 
-tests: check install_project_deps lint-check vet  ## Test code quality
+fix: check clean tidy lint-fix generate-docs format  ## Fix code (might change files)
+.PHONY: fix
+
+tests: check _install_code_deps lint-check vet  ## Test code quality
 	@$(info ${blue_text}- Starting tests ...${reset_text})
 	@richgo test ./...
 .PHONY: tests
@@ -85,24 +122,9 @@ tidy:  ## Run go mod tidy on every mod file in the repo
 	@go mod tidy
 .PHONY: tidy
 
-build: check install_project_deps _build-target-$(RUNNING_IN_ENV)  ## Build the project executable
+build: check _install_code_deps _build-target-$(RUNNING_IN_ENV)  ## Build the project executable
 	@:
 .PHONY: build
-
-_build-target-local:
-	@$(info ${blue_text}- Build local ...${reset_text})
-	@go build -o $(BUILDDIR)/totkit -v
-.PHONY: _build-target-local
-_build-target-ci:
-	@$(info ${blue_text}- Build cross-platform ...${reset_text})
-	@gox \
-		-os=$(XC_OS) \
-		-arch=$(XC_ARCH) \
-		-osarch=$(XC_OSARCH) \
-		-parallel=$(XC_PARALLEL) \
-		-output=$(BUILDDIR)/{{.Dir}}_{{.OS}}_{{.Arch}} \
-		;
-.PHONY: _build-target-ci
 
 install:  ## Install totkit (TechOps Toolkit)
 	@$(info ${blue_text}- Installing totkit ...${reset_text})
@@ -112,10 +134,11 @@ install:  ## Install totkit (TechOps Toolkit)
 	@$(info ${yellow_text}  for autocompletion instructions${reset_text})
 .PHONY: install
 
-install_project_deps:
-	@$(info ${blue_text}- Downloading code dependencies ...${reset_text})
-	@go get -v ./...
-.PHONY: install_project_deps
+install-dependencies:  ## Install dependencies
+	@$(info ${blue_text}- Installing dependencies ...${reset_text})
+	@go install github.com/kyoh86/richgo@latest
+	@go install github.com/mitchellh/gox@latest
+.PHONY: install-dependencies
 
 generate-docs:  ## Generate totkit documentation
 	@$(info ${blue_text}- Generate totkit documentation ...${reset_text})
@@ -129,7 +152,10 @@ clean:  ## Remove generated artifacts
 	@rm -rf $(PROJECT_GENERATED_DOCS_DIR)
 .PHONY: clean
 
+update: _update_info _pre-commit-autoupdate _update_go  ## Update all dependencies
+.PHONY: update
+
 .DEFAULT_GOAL := help
 help: Makefile  ## This help
 	$(call print_help,project_help_header)
-.PHONY: help
+.PHONY: help all
